@@ -26,6 +26,7 @@ button{cursor:pointer;font:inherit}
 .section{padding:12px 18px;border-bottom:1px solid #131313}
 .sec-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
 .sec-hd h2{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#444}
+.sub-hd{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:#555;margin:6px 0}
 .badge{border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;border:1px solid}
 .bg{color:#6ab84a;border-color:#264026;background:#0d1a0d}
 .bb{color:#6a8fd9;border-color:#202840;background:#0d0f1a}
@@ -35,7 +36,7 @@ button{cursor:pointer;font:inherit}
 .note{font-size:11px;padding:8px 10px;border-radius:6px;border:1px solid;line-height:1.6;margin-bottom:8px}
 .ni{color:#555;border-color:#1e1e1e;background:#0f0f0f}
 .ne{color:#c97070;border-color:#402020;background:#1a0d0d}
-table{width:100%;border-collapse:collapse}
+table{width:100%;border-collapse:collapse;margin-top:4px}
 th{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#333;padding:6px 8px;text-align:left;border-bottom:1px solid #181818;white-space:nowrap}
 td{padding:8px;border-bottom:1px solid #111;vertical-align:middle}
 tr:hover td{background:#0f0f0f}
@@ -79,6 +80,32 @@ tr:hover td{background:#0f0f0f}
 .wallet-gold a{color:#c9b080!important}
 .order-link-direct{color:#d2b26d;cursor:pointer;text-decoration:underline;pointer-events:auto}
 .order-link-direct:hover{opacity:.9}
+.limit-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:11px;
+  font-weight:800;
+  color:#ffda8a;
+  background:linear-gradient(180deg,#3a2a00,#241800);
+  border:1px solid #7a5b12;
+  border-radius:999px;
+  padding:4px 10px;
+  box-shadow:0 0 0 1px rgba(255,215,128,.08) inset;
+}
+.limit-chip::before{
+  content:'!';
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:#c9b080;
+  color:#1a1200;
+  font-size:11px;
+  font-weight:900;
+}
 </style>
 </head>
 <body>
@@ -111,27 +138,57 @@ tr:hover td{background:#0f0f0f}
       </table>
     </div>
 
+    <!-- Relay split into Maker / Receiver -->
     <div class="section">
-      <div class="sec-hd"><h2>Relay — live txs</h2><span class="badge bb" id="relayBadge">—</span><span class="spin" id="relaySpin"></span></div>
-      <div id="relayNote" class="note ni">Scan an EVM wallet to load Relay transactions.</div>
-      <table id="relayTbl" style="display:none">
+      <div class="sec-hd">
+        <h2>Relay — live txs</h2>
+        <span class="badge bb" id="relayBadge">—</span><span class="spin" id="relaySpin"></span>
+      </div>
+      <div id="relayNote" class="note ni">
+        Relay history comes from the public requests API for this EVM wallet (may miss some receiver-only orders).
+      </div>
+
+      <div class="sub-hd">As Maker (user = wallet)</div>
+      <table id="relayTblMaker" style="display:none">
         <thead><tr><th>Tx hash</th><th>Chain/Asset From</th><th>Chain/Asset To</th><th>Time</th><th></th></tr></thead>
-        <tbody id="relayBody"></tbody>
+        <tbody id="relayBodyMaker"></tbody>
       </table>
-      <div class="pagination" id="relayPg" style="display:none"></div>
+      <div class="pagination" id="relayPgMaker" style="display:none"></div>
+
+      <div class="sub-hd">As Receiver (destinationAddress = wallet)</div>
+      <table id="relayTblReceiver" style="display:none">
+        <thead><tr><th>Tx hash</th><th>Chain/Asset From</th><th>Chain/Asset To</th><th>Time</th><th></th></tr></thead>
+        <tbody id="relayBodyReceiver"></tbody>
+      </table>
+      <div class="pagination" id="relayPgReceiver" style="display:none"></div>
     </div>
 
+    <!-- LI.FI split Maker / Receiver -->
     <div class="section">
-      <div class="sec-hd"><h2>LI.FI — live routes(30D LIMIT) </h2><span class="badge by" id="dbBadge">—</span><span class="spin" id="dbSpin"></span></div>
-      <div id="dbNote" class="note ni">Scan an EVM wallet to load LI.FI routes.</div>
-      <table id="dbTbl" style="display:none">
+      <div class="sec-hd">
+        <h2>LI.FI — live routes</h2>
+        <span class="limit-chip">30D LIMIT</span>
+        <span class="badge by" id="dbBadge">—</span><span class="spin" id="dbSpin"></span>
+      </div>
+      <div id="dbNote" class="note ni">
+        LI.FI routes from analytics API (wallet as participant, last 30d, min $100).
+      </div>
+
+      <div class="sub-hd">As Maker (wallet param)</div>
+      <table id="dbTblMaker" style="display:none">
         <thead><tr><th>Tx hash</th><th>Chain/Asset From</th><th>Chain/Asset To</th><th>Time</th><th></th></tr></thead>
-        <tbody id="dbBody"></tbody>
+        <tbody id="dbBodyMaker"></tbody>
       </table>
-      <div class="pagination" id="dbPg" style="display:none"></div>
+      <div class="pagination" id="dbPgMaker" style="display:none"></div>
+
+      <div class="sub-hd">As Receiver (receiving.* = wallet)</div>
+      <table id="dbTblReceiver" style="display:none">
+        <thead><tr><th>Tx hash</th><th>Chain/Asset From</th><th>Chain/Asset To</th><th>Time</th><th></th></tr></thead>
+        <tbody id="dbBodyReceiver"></tbody>
+      </table>
+      <div class="pagination" id="dbPgReceiver" style="display:none"></div>
     </div>
 
-    <!-- NEAR Intents as smart explorer link (no broken fetch) -->
     <div class="section">
       <div class="sec-hd">
         <h2>NEAR Intents — explorer</h2>
@@ -177,25 +234,84 @@ document.addEventListener('click', function(e){
 const CHAINS={1:'ETH',10:'OP',56:'BSC',137:'POL',8453:'Base',42161:'Arb',43114:'AVAX',59144:'Linea',534352:'Scroll',81457:'Blast',7565164:'SOL',7777777:'Zora',100:'xDai'};
 const cn=id=>{const n=Number(id);return CHAINS[n]||(n?`#${n}`:'?')};
 const sh=(v,n=14)=>v&&String(v).length>n?String(v).slice(0,7)+'…'+String(v).slice(-5):(v||'—');
-const fmtT=t=>{if(!t)return'—';const ts=typeof t==='number'&&t<2e10?t*1000:Number(t);const d=new Date(ts);return isNaN(d)?'—':d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})};
+const fmtT=t=>{
+  if(!t)return'—';
+  let d;
+  if(typeof t==='number'){
+    const ts=t<2e10?t*1000:t;
+    d=new Date(ts);
+  }else{
+    d=new Date(t);
+  }
+  return isNaN(d)?'—':d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+};
 const compact=v=>{v=String(v||''); return v.length>10 ? v.slice(0,4)+'…'+v.slice(4) : v;};
 const MIN_USD=100;
 
 function copyText(text, btn){
+  if(!text) return;
   navigator.clipboard.writeText(text).then(()=>{
-    btn.textContent='✓';btn.classList.add('copied');
-    setTimeout(()=>{btn.textContent='⧉';btn.classList.remove('copied');},1500);
+    if(btn && btn.classList){
+      btn.textContent='✓';btn.classList.add('copied');
+      setTimeout(()=>{btn.textContent='⧉';btn.classList.remove('copied');},1500);
+    }
   }).catch(()=>{
     const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
-    btn.textContent='✓';btn.classList.add('copied');
-    setTimeout(()=>{btn.textContent='⧉';btn.classList.remove('copied');},1500);
+    if(btn && btn.classList){
+      btn.textContent='✓';btn.classList.add('copied');
+      setTimeout(()=>{btn.textContent='⧉';btn.classList.remove('copied');},1500);
+    }
   });
 }
 
 function hashCell(text, href){
-  text=compact(text);
-  return `<div class="mono-copy order-id-full"><a href="${href}" target="_blank" title="${text}">${sh(text)}</a><button class="copy-btn" data-copy="${text}" onclick="copyText(this.dataset.copy,this)" title="Copy full value">⧉</button></div>`;
+  const full = String(text || '');
+  return `
+    <div class="mono-copy order-id-full">
+      <a href="${href}" target="_blank" title="${full}">${sh(full)}</a>
+      <button
+        class="copy-btn"
+        data-copy="${full}"
+        onclick="copyText(this.dataset.copy,this)"
+        title="Copy full value"
+      >⧉</button>
+    </div>
+  `;
 }
+
+function mrLines(maker, receiver) {
+  const fullM = maker || '';
+  const fullR = receiver || '';
+
+  const shortM = fullM ? compact(fullM) : '—';
+  const shortR = fullR ? compact(fullR) : '—';
+
+  const mSpan = fullM
+    ? `<span class="mr-maker" data-full-maker="${fullM}">${shortM}</span>`
+    : shortM;
+
+  const rSpan = fullR
+    ? `<span class="mr-receiver" data-full-receiver="${fullR}">${shortR}</span>`
+    : shortR;
+
+  return `
+    <div class="sub">
+      <span title="${fullM}">M: ${mSpan}</span>
+      ·
+      <span title="${fullR}">R: ${rSpan}</span>
+    </div>
+  `;
+}
+
+document.addEventListener('click', function(e){
+  const makerEl = e.target.closest('.mr-maker');
+  const recvEl  = e.target.closest('.mr-receiver');
+  if (makerEl) {
+    copyText(makerEl.dataset.fullMaker || '', makerEl);
+  } else if (recvEl) {
+    copyText(recvEl.dataset.fullReceiver || '', recvEl);
+  }
+}, false);
 
 const BRIDGES={
   wallet:[
@@ -253,33 +369,76 @@ function buildRoutes(raw,meta){
   }).join('');
 }
 
-function renderRelayRows(rows){
-  document.getElementById('relayBody').innerHTML=rows.map(r=>{
-    const inTx=(r.data?.inTxs||[])[0]||{};
-    const mIn=r.data?.metadata?.currencyIn||{};
-    const mOut=r.data?.metadata?.currencyOut||{};
-    const inChainId=mIn?.currency?.chainId||inTx?.chainId;
-    const outChainId=mOut?.currency?.chainId;
-    const amtIn=mIn?.amountFormatted||'—';
-    const symIn=mIn?.currency?.symbol||'';
-    const logoIn=mIn?.currency?.metadata?.logoURI||mIn?.currency?.logoURI||'';
-    const amtOut=mOut?.amountFormatted||'—';
-    const symOut=mOut?.currency?.symbol||'';
-    const logoOut=mOut?.currency?.metadata?.logoURI||mOut?.currency?.logoURI||'';
-    const hash=inTx?.txHash||r.id||'';
-    const txUrl=`https://relay.link/transaction/${hash}`;
-    return`<tr>
-      <td>${hashCell(hash,txUrl)}</td>
-      <td>${assetCell(logoIn,symIn,amtIn,inChainId)}</td>
-      <td>${assetCell(logoOut,symOut,amtOut,outChainId)}</td>
-      <td class="sub">${fmtT(r.createdAt||r.data?.createdAt)}</td>
-      <td><a class="opn" href="${txUrl}" target="_blank">Open ↗</a></td>
-    </tr>`;
-  }).join('');
+/* Relay: split into makerRows / receiverRows */
+function renderRelayBuckets(rows){
+  const scannedRaw = document.getElementById('addr').value.trim();
+  const scanned = scannedRaw.toLowerCase();
+
+  const makerRows = [];
+  const receiverRows = [];
+
+  rows.forEach(r=>{
+    const inTx   = (r.data?.inTxs || [])[0] || {};
+    const mIn    = r.data?.metadata?.currencyIn  || {};
+    const mOut   = r.data?.metadata?.currencyOut || {};
+    const inChainId  = mIn?.currency?.chainId || inTx?.chainId;
+    const outChainId = mOut?.currency?.chainId;
+
+    const amtIn  = mIn?.amountFormatted || '—';
+    const symIn  = mIn?.currency?.symbol || '';
+    const logoIn = mIn?.currency?.metadata?.logoURI || mIn?.currency?.logoURI || '';
+
+    const amtOut  = mOut?.amountFormatted || '—';
+    const symOut  = mOut?.currency?.symbol || '';
+    const logoOut = mOut?.currency?.metadata?.logoURI || mOut?.currency?.logoURI || '';
+
+    const hash    = inTx?.txHash || r.id || '';
+    const created = r.createdAt || r.data?.createdAt;
+    const txUrl   = created
+      ? `https://relay.link/transaction/${hash}?t=${encodeURIComponent(created)}`
+      : `https://relay.link/transaction/${hash}`;
+
+    const destRaw = r.data?.metadata?.destinationAddress || '';
+    const destLc  = destRaw.toLowerCase();
+
+    const isReceiver = scanned && destLc && scanned === destLc;
+
+    const maker = isReceiver ? '' : scannedRaw;
+    const receiver = destRaw;
+
+    const rowHtml = `
+      <tr>
+        <td>
+          ${hashCell(hash, txUrl)}
+          ${mrLines(maker, receiver)}
+        </td>
+        <td>${assetCell(logoIn,  symIn,  amtIn,  inChainId)}</td>
+        <td>${assetCell(logoOut, symOut, amtOut, outChainId)}</td>
+        <td class="sub">${fmtT(created)}</td>
+        <td><a class="opn" href="${txUrl}" target="_blank">Open ↗</a></td>
+      </tr>
+    `;
+
+    if (isReceiver) {
+      receiverRows.push(rowHtml);
+    } else {
+      makerRows.push(rowHtml);
+    }
+  });
+
+  document.getElementById('relayBodyMaker').innerHTML = makerRows.join('');
+  document.getElementById('relayBodyReceiver').innerHTML = receiverRows.join('');
 }
 
-function renderLifiRows(rows){
-  document.getElementById('dbBody').innerHTML=rows.map(r=>{
+/* LI.FI: split into makerRows / receiverRows */
+function renderLifiBuckets(rows){
+  const scannedRaw = document.getElementById('addr').value.trim();
+  const scanned = scannedRaw.toLowerCase();
+
+  const makerRows = [];
+  const receiverRows = [];
+
+  rows.forEach(r=>{
     const send=r.sending||{};
     const recv=r.receiving||{};
     const sTok=send.token||{};
@@ -308,19 +467,43 @@ function renderLifiRows(rows){
 
     const time=fmtT(send.timestamp||r.timestamp||r.time);
 
-    return`<tr>
-      <td>${hashCell(txHash,explorer)}</td>
-      <td>${assetCell(fromLogo,fromSym,fromAmt,fromChainId)}</td>
-      <td>${assetCell(toLogo,toSym,toAmt,toChainId)}</td>
-      <td class="sub">${time}</td>
-      <td><a class="opn" href="${explorer}" target="_blank">Open ↗</a></td>
-    </tr>`;
-  }).join('');
+    const recvAddrRaw = recv.walletAddress || recv.to || '';
+    const recvLc = recvAddrRaw.toLowerCase();
+
+    const isReceiver = scanned && recvLc && scanned === recvLc;
+
+    const maker    = isReceiver ? '' : scannedRaw;
+    const receiver = recvAddrRaw;
+
+    const rowHtml = `
+      <tr>
+        <td>
+          ${hashCell(txHash,explorer)}
+          ${mrLines(maker, receiver)}
+        </td>
+        <td>${assetCell(fromLogo,fromSym,fromAmt,fromChainId)}</td>
+        <td>${assetCell(toLogo,toSym,toAmt,toChainId)}</td>
+        <td class="sub">${time}</td>
+        <td><a class="opn" href="${explorer}" target="_blank">Open ↗</a></td>
+      </tr>
+    `;
+
+    if (isReceiver) {
+      receiverRows.push(rowHtml);
+    } else {
+      makerRows.push(rowHtml);
+    }
+  });
+
+  document.getElementById('dbBodyMaker').innerHTML = makerRows.join('');
+  document.getElementById('dbBodyReceiver').innerHTML = receiverRows.join('');
 }
 
+/* simple pagers per bucket */
 function drawPager(rows,perPage,renderFnName,tblId,pgId,page){
-  const fns={renderRelayRows,renderLifiRows};
-  fns[renderFnName](rows.slice(page*perPage,(page+1)*perPage));
+  const fns={renderRelayBuckets,renderLifiBuckets};
+  const sliced = rows.slice(page*perPage,(page+1)*perPage);
+  fns[renderFnName](sliced);
   document.getElementById(tblId).style.display='table';
   const totalPages=Math.ceil(rows.length/perPage);
   const pgEl=document.getElementById(pgId);
@@ -342,8 +525,10 @@ async function loadRelay(addr){
   const spin=document.getElementById('relaySpin'),note=document.getElementById('relayNote');
   const badge=document.getElementById('relayBadge'),sEl=document.getElementById('sRelay');
   spin.textContent='loading…';note.style.display='none';
-  document.getElementById('relayTbl').style.display='none';
-  document.getElementById('relayPg').style.display='none';
+  document.getElementById('relayTblMaker').style.display='none';
+  document.getElementById('relayTblReceiver').style.display='none';
+  document.getElementById('relayPgMaker').style.display='none';
+  document.getElementById('relayPgReceiver').style.display='none';
   try{
     const res=await fetch(`https://api.relay.link/requests/v2?user=${encodeURIComponent(addr)}&limit=50`,{
       headers:{accept:'application/json','Content-Type':'application/json'}
@@ -364,8 +549,11 @@ async function loadRelay(addr){
     const relayBtn=document.querySelector('button[data-bridge="relay"]');
     if(relayBtn) relayBtn.textContent = `Relay: ${rows.length} txs`;
 
-    if(!rows.length){note.textContent='No Relay txs ≥$100 found.';note.className='note ni';note.style.display='block';return;}
-    drawPager(rows,10,'renderRelayRows','relayTbl','relayPg',0);
+    if(!rows.length){note.textContent='No Relay txs ≥$100 found for this EVM wallet.';note.className='note ni';note.style.display='block';return;}
+    // For now: simple pager per whole set -> both buckets share same page slice
+    drawPager(rows,10,'renderRelayBuckets','relayTblMaker','relayPgMaker',0);
+    document.getElementById('relayTblReceiver').style.display='table';
+    document.getElementById('relayPgReceiver').style.display='none';
   }catch(e){
     spin.textContent='';badge.textContent='err';sEl.textContent='err';
     note.textContent=`Relay: ${e.message}`;note.className='note ne';note.style.display='block';
@@ -376,8 +564,10 @@ async function loadLifi(addr){
   const spin=document.getElementById('dbSpin'),note=document.getElementById('dbNote');
   const badge=document.getElementById('dbBadge'),sEl=document.getElementById('sDb');
   spin.textContent='loading…';note.style.display='none';
-  document.getElementById('dbTbl').style.display='none';
-  document.getElementById('dbPg').style.display='none';
+  document.getElementById('dbTblMaker').style.display='none';
+  document.getElementById('dbTblReceiver').style.display='none';
+  document.getElementById('dbPgMaker').style.display='none';
+  document.getElementById('dbPgReceiver').style.display='none';
   try{
     const res=await fetch(
       `https://li.quest/v1/analytics/transfers?wallet=${encodeURIComponent(addr)}&status=DONE&limit=1000`,
@@ -405,7 +595,7 @@ async function loadLifi(addr){
     if(lifiBtn) lifiBtn.textContent = `LI.FI: ${rows.length} routes`;
 
     if(!rows.length){
-      const body=document.getElementById('dbBody');
+      const body=document.getElementById('dbBodyMaker');
       body.innerHTML = `
         <tr>
           <td colspan="5" class="wallet-gold">
@@ -415,14 +605,16 @@ async function loadLifi(addr){
           </td>
         </tr>
       `;
-      document.getElementById('dbTbl').style.display='table';
+      document.getElementById('dbTblMaker').style.display='table';
       note.textContent='No LI.FI routes from analytics API — open Scan for full history.';
       note.className='note ni';
       note.style.display='block';
       return;
     }
 
-    drawPager(rows,10,'renderLifiRows','dbTbl','dbPg',0);
+    drawPager(rows,10,'renderLifiBuckets','dbTblMaker','dbPgMaker',0);
+    document.getElementById('dbTblReceiver').style.display='table';
+    document.getElementById('dbPgReceiver').style.display='none';
   }catch(e){
     spin.textContent='';badge.textContent='err';sEl.textContent='err';
     note.textContent=`LI.FI: ${e.message}`;note.className='note ne';note.style.display='block';
@@ -438,19 +630,24 @@ async function scan(){
   const debBtn=document.querySelector('button[data-bridge="debridge"]');
   if(debBtn) debBtn.textContent='Open for full history';
 
-  // reset Relay / LI.FI
-  document.getElementById('relayBody').innerHTML='';
+  // reset Relay / LI.FI maker/receiver tables
+  document.getElementById('relayBodyMaker').innerHTML='';
+  document.getElementById('relayBodyReceiver').innerHTML='';
   document.getElementById('relayBadge').textContent='—';
-  document.getElementById('relayTbl').style.display='none';
-  document.getElementById('relayPg').style.display='none';
+  document.getElementById('relayTblMaker').style.display='none';
+  document.getElementById('relayTblReceiver').style.display='none';
+  document.getElementById('relayPgMaker').style.display='none';
+  document.getElementById('relayPgReceiver').style.display='none';
 
-  document.getElementById('dbBody').innerHTML='';
+  document.getElementById('dbBodyMaker').innerHTML='';
+  document.getElementById('dbBodyReceiver').innerHTML='';
   document.getElementById('dbBadge').textContent='—';
   document.getElementById('sDb').textContent='—';
-  document.getElementById('dbTbl').style.display='none';
-  document.getElementById('dbPg').style.display='none';
+  document.getElementById('dbTblMaker').style.display='none';
+  document.getElementById('dbTblReceiver').style.display='none';
+  document.getElementById('dbPgMaker').style.display='none';
+  document.getElementById('dbPgReceiver').style.display='none';
 
-  // reset NEAR explorer state
   const nearNote=document.getElementById('nearNote');
   const nearLink=document.getElementById('nearLink');
   const nearBadge=document.getElementById('nearBadge');
@@ -463,8 +660,8 @@ async function scan(){
   const dbNote=document.getElementById('dbNote');
   relayNote.className='note ni';dbNote.className='note ni';
   relayNote.style.display='block';dbNote.style.display='block';
-  relayNote.textContent='Scan an EVM wallet to load Relay transactions.';
-  dbNote.textContent='Scan an EVM wallet to load LI.FI routes.';
+  relayNote.textContent='Relay history comes from the public requests API for this EVM wallet (may miss some receiver-only orders).';
+  dbNote.textContent='LI.FI routes from analytics API (wallet as participant, last 30d, min $100).';
 
   if(meta.tx){
     relayNote.textContent='Tx mode — paste a wallet address for history.';
@@ -477,7 +674,6 @@ async function scan(){
     relayNote.style.display='none';
     dbNote.style.display='none';
 
-    // smart NEAR link for this wallet
     nearLink.href='https://explorer.near-intents.org/?search='+encodeURIComponent(raw);
     nearNote.textContent='Click below to open NEAR Intents Explorer for this wallet.';
     nearBadge.textContent='wallet';
@@ -491,11 +687,12 @@ async function scan(){
 
   if(meta.kind==='sol'){
     document.getElementById('relayBadge').textContent='N/A';
-    relayNote.textContent='Relay supports EVM and SOL.';relayNote.className='note ni';relayNote.style.display='block';
-    document.getElementById('relayTbl').style.display='none';
+    relayNote.textContent='Relay history for SOL is not fetched via this endpoint — open Solscan / other indexer manually.';
+    relayNote.className='note ni';relayNote.style.display='block';
+
     document.getElementById('dbBadge').textContent='N/A';
-    dbNote.textContent='LI.FI routes are shown for EVM wallets.';dbNote.className='note ni';dbNote.style.display='block';
-    document.getElementById('dbTbl').style.display='none';
+    dbNote.textContent='LI.FI analytics API is wired here for EVM wallets. Solana support is via routes, not wallet scan.';
+    dbNote.className='note ni';dbNote.style.display='block';
 
     nearBadge.textContent='link';
     nearNote.textContent='NEAR Intents explorer wallet search is wired for EVM addresses here.';
