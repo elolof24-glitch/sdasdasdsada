@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Chrollo Bridge Monitor</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0d0d;color:#e5e2da;font-family:Inter,-apple-system,sans-serif;font-size:13px;line-height:1.5}
+a{color:#c9b080;text-decoration:none;cursor:pointer}a:hover{text-decoration:underline;color:#e5cb95}
+button{cursor:pointer;font:inherit}
+.topbar{padding:11px 18px;border-bottom:1px solid #1a1a1a}
+.brand{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.brand em{color:#c9b080;font-style:normal}
+.search-row{display:flex;gap:8px;padding:10px 18px;background:#0a0a0a;border-bottom:1px solid #181818;align-items:center}
+.search-row input{flex:1;background:#151515;border:1px solid #262626;border-radius:7px;padding:8px 12px;color:#e5e2da;font-size:12px;font-family:ui-monospace,monospace;outline:none;min-width:0}
+.search-row input:focus{border-color:#c9b080}
+.chip{font-size:11px;color:#c9b080;background:#1a1500;border:1px solid #2a2000;border-radius:6px;padding:4px 10px;white-space:nowrap;flex-shrink:0}
+.scan-btn{background:linear-gradient(180deg,#cdb07a,#b08c52);color:#13100a;font-weight:700;border:none;border-radius:7px;padding:8px 16px;font-size:12px;flex-shrink:0}
+.samples{display:flex;gap:6px;padding:6px 18px;background:#080808;border-bottom:1px solid #141414;flex-wrap:wrap}
+.pill{background:transparent;border:1px solid #222;border-radius:20px;padding:3px 10px;font-size:11px;color:#555;cursor:pointer}
+.pill:hover{color:#bbb;border-color:#444}
+.layout{display:flex}
+.main{flex:1;min-width:0}
+.sidebar{width:180px;border-left:1px solid #181818;background:#090909;padding:12px;flex-shrink:0}
+.section{padding:12px 18px;border-bottom:1px solid #131313}
+.sec-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.sec-hd h2{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#444}
+.badge{border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;border:1px solid}
+.bg{color:#6ab84a;border-color:#264026;background:#0d1a0d}
+.bb{color:#6a8fd9;border-color:#202840;background:#0d0f1a}
+.by{color:#c9b080;border-color:#2a2200;background:#1a1500}
+.br{color:#d46a6a;border-color:#402020;background:#1a0d0d}
+.spin{font-size:11px;color:#444}
+.note{font-size:11px;padding:8px 10px;border-radius:6px;border:1px solid;line-height:1.6;margin-bottom:8px}
+.ni{color:#555;border-color:#1e1e1e;background:#0f0f0f}
+.ne{color:#c97070;border-color:#402020;background:#1a0d0d}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#333;padding:6px 8px;text-align:left;border-bottom:1px solid #181818;white-space:nowrap}
+td{padding:8px;border-bottom:1px solid #111;vertical-align:middle}
+tr:hover td{background:#0f0f0f}
+.bname{font-weight:600;font-size:12px;white-space:nowrap}
+.mtag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;text-transform:uppercase;font-weight:600}
+.mw{background:#0d1a0d;color:#6ab84a;border:1px solid #264026}
+.mt{background:#0d0f1a;color:#6a8fd9;border:1px solid #202840}
+.cov{font-size:11px;color:#333}
+.opn{display:inline-block;color:#c9b080;font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px;background:#1a1500;border:1px solid #2a2200;text-decoration:none!important;white-space:nowrap}
+.opn:hover{background:#252000;color:#e5cb95}
+.amt{font-weight:600;font-size:12px;white-space:nowrap}
+.sub{font-size:11px;color:#555;white-space:nowrap}
+.mono-copy{font-family:ui-monospace,monospace;font-size:11px;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.mono-copy span{overflow:hidden;text-overflow:ellipsis;max-width:110px;display:inline-block;vertical-align:middle}
+.copy-btn{background:none;border:1px solid #252525;border-radius:4px;color:#444;padding:1px 5px;font-size:10px;cursor:pointer;flex-shrink:0}
+.copy-btn:hover{color:#c9b080;border-color:#3a3000}
+.copy-btn.copied{color:#6ab84a;border-color:#264026}
+.pagination{display:flex;align-items:center;gap:5px;margin-top:10px;flex-wrap:wrap}
+.pg-btn{background:#151515;border:1px solid #262626;color:#666;border-radius:6px;padding:4px 10px;font-size:11px}
+.pg-btn:hover:not([disabled]){background:#1e1e1e;color:#ccc;border-color:#444}
+.pg-btn[disabled]{opacity:.3;cursor:default}
+.pg-btn.active{background:#1a1500;border-color:#c9b080;color:#c9b080;font-weight:700}
+.pg-info{font-size:11px;color:#333;margin-left:4px}
+.sb-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#2a2a2a;margin:12px 0 5px}
+.sb-lbl:first-child{margin-top:0}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px}
+.sc{background:#111;border:1px solid #1e1e1e;border-radius:7px;padding:8px}
+.sc .k{font-size:10px;color:#3a3a3a;margin-bottom:2px}
+.sc .v{font-size:18px;font-weight:700;line-height:1}
+.sb-note{font-size:11px;color:#2a2a2a;line-height:1.8}
+.asset-cell{display:flex;align-items:center;gap:8px;min-width:0}
+.token-wrap{position:relative;flex-shrink:0;width:32px;height:32px}
+.token-logo{width:32px;height:32px;border-radius:50%;background:#1a1a1a;display:block;object-fit:cover}
+.token-logo-fallback{width:32px;height:32px;border-radius:50%;background:#1e1e1e;border:1px solid #2a2a2a;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#666;flex-shrink:0}
+.chain-icon{position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;border-radius:50%;border:1.5px solid #0d0d0d;background:#111;object-fit:cover;display:block}
+.chain-icon-fb{position:absolute;bottom:-2px;right:-2px;width:14px;height:14px;border-radius:50%;border:1.5px solid #0d0d0d;background:#1e1e1e;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;color:#666;line-height:1}
+.asset-info{min-width:0}
+.asset-amt{font-weight:600;font-size:12px;white-space:nowrap}
+.asset-sym{font-size:11px;color:#666;white-space:nowrap}
+.gold-cell{color:#c9b080;font-weight:700}
+.wallet-gold a{color:#c9b080!important}
+.order-link-direct{color:#d2b26d;cursor:pointer;text-decoration:underline;pointer-events:auto}
+.order-link-direct:hover{opacity:.9}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="brand">CHROLLO <em>BRIDGE MONITOR</em></div></div>
+<div class="search-row">
+  <input id="addr" placeholder="EVM or SOL wallet / tx hash..." value=""/>
+  <span class="chip" id="chip">EVM wallet</span>
+  <button class="scan-btn" onclick="scan()">Scan</button>
+</div>
+<div class="samples">
+  <button class="pill" onclick="go('0x87bc573eca1c98c2a53cf2d631bd63a427887d6f')">EVM wallet</button>
+  <button class="pill" onclick="go('4BLHVARTLZfDH4RbedC6n5jG2u4DkBZu1qqoZDMhAHks')">SOL wallet</button>
+  <button class="pill" onclick="go('0xe26ac3a9da8f864dcfb319ed01e83fdd87501f0506b4df144fe51507186e1620')">EVM tx</button>
+</div>
+<div class="layout">
+  <div class="main">
+    <div class="section">
+      <div class="sec-hd"><h2>Bridge routes</h2><span class="badge bg" id="rBadge">0</span></div>
+      <table>
+        <thead>
+          <tr>
+            <th>Bridge</th>
+            <th>Mode</th>
+            <th>Coverage</th>
+            <th></th>
+            <th>Txs</th>
+          </tr>
+        </thead>
+        <tbody id="rBody"></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="sec-hd"><h2>Relay — live txs</h2><span class="badge bb" id="relayBadge">—</span><span class="spin" id="relaySpin"></span></div>
+      <div id="relayNote" class="note ni">Scan an EVM wallet to load Relay transactions.</div>
+      <table id="relayTbl" style="display:none">
+        <thead><tr><th>Tx hash</th><th>Chain/Asset From</th><th>Chain/Asset To</th><th>Time</th><th></th></tr></thead>
+        <tbody id="relayBody"></tbody>
+      </table>
+      <div class="pagination" id="relayPg" style="display:none"></div>
+    </div>
+
+    <div class="section">
+      <div class="sec-hd"><h2>LI.FI — live routes</h2><span class="badge by" id="dbBadge">—</span><span class="spin" id="dbSpin"></span></div>
+      <div id="dbNote" class="note ni">Scan an EVM wallet to load LI.FI routes.</div>
+      <table id="dbTbl" style="display:none">
+        <thead><tr><th>Tx hash</th><th>Chain/Asset From</th><th>Chain/Asset To</th><th>Time</th><th></th></tr></thead>
+        <tbody id="dbBody"></tbody>
+      </table>
+      <div class="pagination" id="dbPg" style="display:none"></div>
+    </div>
+
+    <!-- NEAR Intents as smart explorer link (no broken fetch) -->
+    <div class="section">
+      <div class="sec-hd">
+        <h2>NEAR Intents — explorer</h2>
+        <span class="badge by" id="nearBadge">link</span>
+      </div>
+      <div id="nearNote" class="note ni">
+        Scan an EVM wallet. Click below to open NEAR Intents Explorer for this address.
+      </div>
+      <a class="opn" id="nearLink" href="https://explorer.near-intents.org" target="_blank">
+        Open NEAR Intents ↗
+      </a>
+    </div>
+
+    <div class="section">
+      <div class="sec-hd"><h2>Mayan — explorer</h2><span class="badge br">CORS</span></div>
+      <div class="note ne" style="margin-bottom:8px">Mayan blocks browser requests. Open manually.</div>
+      <a class="opn" href="https://explorer.mayan.finance/" target="_blank">Open Mayan ↗</a>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="sb-lbl">Stats</div>
+    <div class="sg">
+      <div class="sc"><div class="k">Relay</div><div class="v" id="sRelay">—</div></div>
+      <div class="sc"><div class="k">LI.FI</div><div class="v" id="sDb">—</div></div>
+      <div class="sc"><div class="k">Type</div><div class="v" id="sType">—</div></div>
+      <div class="sc"><div class="k">Routes</div><div class="v" id="sRoutes">—</div></div>
+    </div>
+    <div class="sb-lbl">Filters</div>
+    <p class="sb-note">Min $100 swaps (Relay & LI.FI)<br>10 per page<br>Click hash to open<br>Copy btn to copy</p>
+  </div>
+</div>
+
+<script>
+document.addEventListener('click', function(e){
+  const a = e.target.closest('a');
+  if(a && a.href && a.href !== '#' && !a.href.startsWith('javascript')){
+    e.preventDefault();
+    window.open(a.href, '_blank');
+  }
+}, true);
+
+const CHAINS={1:'ETH',10:'OP',56:'BSC',137:'POL',8453:'Base',42161:'Arb',43114:'AVAX',59144:'Linea',534352:'Scroll',81457:'Blast',7565164:'SOL',7777777:'Zora',100:'xDai'};
+const cn=id=>{const n=Number(id);return CHAINS[n]||(n?`#${n}`:'?')};
+const sh=(v,n=14)=>v&&String(v).length>n?String(v).slice(0,7)+'…'+String(v).slice(-5):(v||'—');
+const fmtT=t=>{if(!t)return'—';const ts=typeof t==='number'&&t<2e10?t*1000:Number(t);const d=new Date(ts);return isNaN(d)?'—':d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})};
+const compact=v=>{v=String(v||''); return v.length>10 ? v.slice(0,4)+'…'+v.slice(4) : v;};
+const MIN_USD=100;
+
+function copyText(text, btn){
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='✓';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='⧉';btn.classList.remove('copied');},1500);
+  }).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    btn.textContent='✓';btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='⧉';btn.classList.remove('copied');},1500);
+  });
+}
+
+function hashCell(text, href){
+  text=compact(text);
+  return `<div class="mono-copy order-id-full"><a href="${href}" target="_blank" title="${text}">${sh(text)}</a><button class="copy-btn" data-copy="${text}" onclick="copyText(this.dataset.copy,this)" title="Copy full value">⧉</button></div>`;
+}
+
+const BRIDGES={
+  wallet:[
+    {n:'deBridge',u:v=>`https://app.debridge.com/orders?s=${encodeURIComponent(v)}`,c:'Order history'},
+    {n:'Relay',u:v=>`https://relay.link/transactions?address=${encodeURIComponent(v)}`,c:'Wallet txs'},
+    {n:'Mayan',u:()=>`https://explorer.mayan.finance/`,c:'Paste address inside'},
+    {n:'NEAR Intents',u:v=>`https://explorer.near-intents.org/?search=${encodeURIComponent(v)}`,c:'1Click history (link)'},
+    {n:'LI.FI',u:v=>`https://scan.li.fi/wallet/${encodeURIComponent(v)}`,c:'LI.FI scan'},
+    {n:'Privacy Cash',u:()=>`https://solscan.io/account/9fhQBbumKEFuXtMBDw8AaQyAjCorLGJQiS3skWZdQyQD`,c:'SOL privacy vault'},
+  ],
+  tx:[
+    {n:'LI.FI',u:v=>`https://scan.li.fi/tx/${encodeURIComponent(v)}`,c:'Tx status'},
+    {n:'Relay',u:v=>`https://relay.link/transaction/${encodeURIComponent(v)}`,c:'Relay tx'},
+    {n:'deBridge',u:v=>`https://app.debridge.com/orders?s=${encodeURIComponent(v)}`,c:'Order search'},
+    {n:'Solscan',u:v=>`https://solscan.io/tx/${encodeURIComponent(v)}`,c:'SOL scanner'},
+    {n:'Etherscan',u:v=>`https://etherscan.io/tx/${encodeURIComponent(v)}`,c:'EVM scanner'},
+  ]
+};
+
+function classify(v){
+  if(!v)return{kind:'unknown',label:'—',tx:false};
+  if(/^0x[a-fA-F0-9]{40}$/.test(v))return{kind:'evm',label:'EVM wallet',tx:false};
+  if(/^0x[a-fA-F0-9]{64}$/.test(v))return{kind:'evm',label:'EVM tx',tx:true};
+  if(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(v))return{kind:'sol',label:'SOL wallet',tx:false};
+  if(/^[1-9A-HJ-NP-Za-km-z]{60,90}$/.test(v))return{kind:'sol',label:'SOL tx',tx:true};
+  return{kind:'unknown',label:'Unknown',tx:false};
+}
+
+function buildRoutes(raw,meta){
+  const mode=meta.tx?'tx':'wallet';
+  const list=BRIDGES[mode];
+  document.getElementById('rBadge').textContent=list.length+' routes';
+  document.getElementById('sRoutes').textContent=list.length;
+  document.getElementById('sType').textContent=meta.kind==='evm'?'EVM':meta.kind==='sol'?'SOL':'?';
+  document.getElementById('rBody').innerHTML=list.map(s=>{
+    const href=s.u(raw);
+    const key = s.n.replace(/\s+|\./g,'').toLowerCase();
+    return `
+      <tr>
+        <td class="bname">${s.n}</td>
+        <td><span class="mtag ${mode==='tx'?'mt':'mw'}">${mode}</span></td>
+        <td class="cov">${s.c}</td>
+        <td><a class="opn" href="${href}" target="_blank">Open ↗</a></td>
+        <td>
+          <button
+            class="pg-btn"
+            data-bridge="${key}"
+            data-wallet="${raw}"
+            id="txcount-${key}"
+          >
+            —
+          </button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function renderRelayRows(rows){
+  document.getElementById('relayBody').innerHTML=rows.map(r=>{
+    const inTx=(r.data?.inTxs||[])[0]||{};
+    const mIn=r.data?.metadata?.currencyIn||{};
+    const mOut=r.data?.metadata?.currencyOut||{};
+    const inChainId=mIn?.currency?.chainId||inTx?.chainId;
+    const outChainId=mOut?.currency?.chainId;
+    const amtIn=mIn?.amountFormatted||'—';
+    const symIn=mIn?.currency?.symbol||'';
+    const logoIn=mIn?.currency?.metadata?.logoURI||mIn?.currency?.logoURI||'';
+    const amtOut=mOut?.amountFormatted||'—';
+    const symOut=mOut?.currency?.symbol||'';
+    const logoOut=mOut?.currency?.metadata?.logoURI||mOut?.currency?.logoURI||'';
+    const hash=inTx?.txHash||r.id||'';
+    const txUrl=`https://relay.link/transaction/${hash}`;
+    return`<tr>
+      <td>${hashCell(hash,txUrl)}</td>
+      <td>${assetCell(logoIn,symIn,amtIn,inChainId)}</td>
+      <td>${assetCell(logoOut,symOut,amtOut,outChainId)}</td>
+      <td class="sub">${fmtT(r.createdAt||r.data?.createdAt)}</td>
+      <td><a class="opn" href="${txUrl}" target="_blank">Open ↗</a></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderLifiRows(rows){
+  document.getElementById('dbBody').innerHTML=rows.map(r=>{
+    const send=r.sending||{};
+    const recv=r.receiving||{};
+    const sTok=send.token||{};
+    const rTok=recv.token||{};
+
+    const txHash=send.txHash||'—';
+    const explorer=r.lifiExplorerLink||(txHash?`https://scan.li.fi/tx/${encodeURIComponent(txHash)}`:'#');
+
+    const fromChainId=sTok.chainId;
+    const toChainId=rTok.chainId;
+
+    const fromSym=(sTok.symbol||'').toUpperCase();
+    const toSym=(rTok.symbol||'').toUpperCase();
+
+    const fromLogo=sTok.logoURI||'';
+    const toLogo=rTok.logoURI||'';
+
+    const fromDec=Number(sTok.decimals||18);
+    const toDec=Number(rTok.decimals||18);
+
+    const rawFrom=Number(send.amount||0);
+    const rawTo=Number(recv.amount||0);
+
+    const fromAmt=rawFrom && fromDec ? (rawFrom/10**fromDec).toFixed(6) : (rawFrom || '—');
+    const toAmt=rawTo && toDec ? (rawTo/10**toDec).toFixed(6) : (rawTo || '—');
+
+    const time=fmtT(send.timestamp||r.timestamp||r.time);
+
+    return`<tr>
+      <td>${hashCell(txHash,explorer)}</td>
+      <td>${assetCell(fromLogo,fromSym,fromAmt,fromChainId)}</td>
+      <td>${assetCell(toLogo,toSym,toAmt,toChainId)}</td>
+      <td class="sub">${time}</td>
+      <td><a class="opn" href="${explorer}" target="_blank">Open ↗</a></td>
+    </tr>`;
+  }).join('');
+}
+
+function drawPager(rows,perPage,renderFnName,tblId,pgId,page){
+  const fns={renderRelayRows,renderLifiRows};
+  fns[renderFnName](rows.slice(page*perPage,(page+1)*perPage));
+  document.getElementById(tblId).style.display='table';
+  const totalPages=Math.ceil(rows.length/perPage);
+  const pgEl=document.getElementById(pgId);
+  if(totalPages<=1){pgEl.style.display='none';return;}
+  pgEl.style.display='flex';
+  window['_pg_'+pgId]={rows,perPage,renderFnName,tblId};
+  let html=`<button class="pg-btn" ${page===0?'disabled':''} onclick="_pgGo('${pgId}',${page-1})">← Prev</button>`;
+  let start=Math.max(0,page-3),end=Math.min(totalPages-1,page+3);
+  if(start>0)html+=`<button class="pg-btn" onclick="_pgGo('${pgId}',0)">1</button><span class="sub">…</span>`;
+  for(let i=start;i<=end;i++)html+=`<button class="pg-btn${i===page?' active':''}" onclick="_pgGo('${pgId}',${i})">${i+1}</button>`;
+  if(end<totalPages-1)html+=`<span class="sub">…</span><button class="pg-btn" onclick="_pgGo('${pgId}',${totalPages-1})">${totalPages}</button>`;
+  html+=`<button class="pg-btn" ${page===totalPages-1?'disabled':''} onclick="_pgGo('${pgId}',${page+1})">Next →</button>`;
+  html+=`<span class="pg-info">${page*perPage+1}–${Math.min((page+1)*perPage,rows.length)} of ${rows.length}</span>`;
+  pgEl.innerHTML=html;
+}
+window._pgGo=(pgId,page)=>{const s=window['_pg_'+pgId];if(s)drawPager(s.rows,s.perPage,s.renderFnName,s.tblId,pgId,page);};
+
+async function loadRelay(addr){
+  const spin=document.getElementById('relaySpin'),note=document.getElementById('relayNote');
+  const badge=document.getElementById('relayBadge'),sEl=document.getElementById('sRelay');
+  spin.textContent='loading…';note.style.display='none';
+  document.getElementById('relayTbl').style.display='none';
+  document.getElementById('relayPg').style.display='none';
+  try{
+    const res=await fetch(`https://api.relay.link/requests/v2?user=${encodeURIComponent(addr)}&limit=50`,{
+      headers:{accept:'application/json','Content-Type':'application/json'}
+    });
+    if(!res.ok){const txt=await res.text();throw new Error(`HTTP ${res.status}: ${txt.slice(0,120)}`);}
+    const d=await res.json();
+    let rows=d.requests||d.data||[];
+    rows=rows.filter(r=>{
+      const usd=Number(r.data?.metadata?.currencyIn?.amountUsd||0);
+      if(usd)return usd>=MIN_USD;
+      const amt=Number(r.data?.metadata?.currencyIn?.amountFormatted||0);
+      const sym=(r.data?.metadata?.currencyIn?.currency?.symbol||'').toUpperCase();
+      if(['USDC','USDT','DAI','BUSD','USDE'].includes(sym))return amt>=MIN_USD;
+      return true;
+    });
+    spin.textContent='';badge.textContent=rows.length+' txs';sEl.textContent=rows.length;
+
+    const relayBtn=document.querySelector('button[data-bridge="relay"]');
+    if(relayBtn) relayBtn.textContent = `Relay: ${rows.length} txs`;
+
+    if(!rows.length){note.textContent='No Relay txs ≥$100 found.';note.className='note ni';note.style.display='block';return;}
+    drawPager(rows,10,'renderRelayRows','relayTbl','relayPg',0);
+  }catch(e){
+    spin.textContent='';badge.textContent='err';sEl.textContent='err';
+    note.textContent=`Relay: ${e.message}`;note.className='note ne';note.style.display='block';
+  }
+}
+
+async function loadLifi(addr){
+  const spin=document.getElementById('dbSpin'),note=document.getElementById('dbNote');
+  const badge=document.getElementById('dbBadge'),sEl=document.getElementById('sDb');
+  spin.textContent='loading…';note.style.display='none';
+  document.getElementById('dbTbl').style.display='none';
+  document.getElementById('dbPg').style.display='none';
+  try{
+    const res=await fetch(
+      `https://li.quest/v1/analytics/transfers?wallet=${encodeURIComponent(addr)}&status=DONE&limit=1000`,
+      {headers:{accept:'application/json'}}
+    );
+    if(!res.ok){const txt=await res.text();throw new Error(`HTTP ${res.status}: ${txt.slice(0,120)}`);}
+    const d=await res.json();
+    let rows=d.transfers||[];
+
+    rows=rows.filter(r=>{
+      const send=r.sending||{};
+      const tok=send.token||{};
+      const rawAmt=Number(send.amount||0);
+      if(!rawAmt) return false;
+      const price=Number(tok.priceUSD||0);
+      if(!price) return true;
+      const dec=Number(tok.decimals ?? 18);
+      const amt=dec ? rawAmt/10**dec : rawAmt;
+      return price*amt>=MIN_USD;
+    });
+
+    spin.textContent='';badge.textContent=rows.length+' routes';sEl.textContent=rows.length;
+
+    const lifiBtn=document.querySelector('button[data-bridge="lifi"]');
+    if(lifiBtn) lifiBtn.textContent = `LI.FI: ${rows.length} routes`;
+
+    if(!rows.length){
+      const body=document.getElementById('dbBody');
+      body.innerHTML = `
+        <tr>
+          <td colspan="5" class="wallet-gold">
+            <a class="order-link-direct" href="https://scan.li.fi/wallet/${encodeURIComponent(addr)}" target="_blank">
+              Open LI.FI Scan for this wallet ↗
+            </a>
+          </td>
+        </tr>
+      `;
+      document.getElementById('dbTbl').style.display='table';
+      note.textContent='No LI.FI routes from analytics API — open Scan for full history.';
+      note.className='note ni';
+      note.style.display='block';
+      return;
+    }
+
+    drawPager(rows,10,'renderLifiRows','dbTbl','dbPg',0);
+  }catch(e){
+    spin.textContent='';badge.textContent='err';sEl.textContent='err';
+    note.textContent=`LI.FI: ${e.message}`;note.className='note ne';note.style.display='block';
+  }
+}
+
+async function scan(){
+  const raw=document.getElementById('addr').value.trim();
+  const meta=classify(raw);
+  document.getElementById('chip').textContent=meta.label;
+  buildRoutes(raw,meta);
+
+  const debBtn=document.querySelector('button[data-bridge="debridge"]');
+  if(debBtn) debBtn.textContent='Open for full history';
+
+  // reset Relay / LI.FI
+  document.getElementById('relayBody').innerHTML='';
+  document.getElementById('relayBadge').textContent='—';
+  document.getElementById('relayTbl').style.display='none';
+  document.getElementById('relayPg').style.display='none';
+
+  document.getElementById('dbBody').innerHTML='';
+  document.getElementById('dbBadge').textContent='—';
+  document.getElementById('sDb').textContent='—';
+  document.getElementById('dbTbl').style.display='none';
+  document.getElementById('dbPg').style.display='none';
+
+  // reset NEAR explorer state
+  const nearNote=document.getElementById('nearNote');
+  const nearLink=document.getElementById('nearLink');
+  const nearBadge=document.getElementById('nearBadge');
+  nearBadge.textContent='link';
+  nearNote.className='note ni';
+  nearNote.textContent='Scan an EVM wallet. Click below to open NEAR Intents Explorer for this address.';
+  nearLink.href='https://explorer.near-intents.org';
+
+  const relayNote=document.getElementById('relayNote');
+  const dbNote=document.getElementById('dbNote');
+  relayNote.className='note ni';dbNote.className='note ni';
+  relayNote.style.display='block';dbNote.style.display='block';
+  relayNote.textContent='Scan an EVM wallet to load Relay transactions.';
+  dbNote.textContent='Scan an EVM wallet to load LI.FI routes.';
+
+  if(meta.tx){
+    relayNote.textContent='Tx mode — paste a wallet address for history.';
+    dbNote.textContent='Tx mode — paste a wallet address for LI.FI history.';
+    nearNote.textContent='Tx mode — paste a wallet address to open NEAR Intents for that address.';
+    return;
+  }
+
+  if(meta.kind==='evm'){
+    relayNote.style.display='none';
+    dbNote.style.display='none';
+
+    // smart NEAR link for this wallet
+    nearLink.href='https://explorer.near-intents.org/?search='+encodeURIComponent(raw);
+    nearNote.textContent='Click below to open NEAR Intents Explorer for this wallet.';
+    nearBadge.textContent='wallet';
+
+    await Promise.all([
+      loadRelay(raw),
+      loadLifi(raw)
+    ]);
+    return;
+  }
+
+  if(meta.kind==='sol'){
+    document.getElementById('relayBadge').textContent='N/A';
+    relayNote.textContent='Relay supports EVM and SOL.';relayNote.className='note ni';relayNote.style.display='block';
+    document.getElementById('relayTbl').style.display='none';
+    document.getElementById('dbBadge').textContent='N/A';
+    dbNote.textContent='LI.FI routes are shown for EVM wallets.';dbNote.className='note ni';dbNote.style.display='block';
+    document.getElementById('dbTbl').style.display='none';
+
+    nearBadge.textContent='link';
+    nearNote.textContent='NEAR Intents explorer wallet search is wired for EVM addresses here.';
+    nearLink.href='https://explorer.near-intents.org';
+    return;
+  }
+
+  relayNote.textContent='Unknown input — paste an EVM or SOL wallet.';
+  dbNote.textContent='Unknown input — paste an EVM wallet for LI.FI routes.';
+  nearNote.textContent='Unknown input — NEAR Intents explorer works best with wallet addresses.';
+}
+
+const CHAIN_LOGOS={
+  1:'https://icons.llamao.fi/icons/chains/rsz_ethereum.jpg',
+  10:'https://icons.llamao.fi/icons/chains/rsz_optimism.jpg',
+  56:'https://icons.llamao.fi/icons/chains/rsz_binance.jpg',
+  137:'https://icons.llamao.fi/icons/chains/rsz_polygon.jpg',
+  8453:'https://icons.llamao.fi/icons/chains/rsz_base.jpg',
+  42161:'https://icons.llamao.fi/icons/chains/rsz_arbitrum.jpg',
+  43114:'https://icons.llamao.fi/icons/chains/rsz_avalanche.jpg',
+  59144:'https://icons.llamao.fi/icons/chains/rsz_linea.jpg',
+  534352:'https://icons.llamao.fi/icons/chains/rsz_scroll.jpg',
+  81457:'https://icons.llamao.fi/icons/chains/rsz_blast.jpg',
+  7565164:'https://icons.llamao.fi/icons/chains/rsz_solana.jpg',
+  100:'https://icons.llamao.fi/icons/chains/rsz_xdai.jpg',
+};
+
+function tokenLogoEl(logoUri,sym,chainId){
+  const abbr=(sym||'?').slice(0,4).toUpperCase();
+  const img=logoUri?`<img class="token-logo" src="${logoUri}" alt="${sym}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:'';
+  const fb=`<div class="token-logo-fallback" style="${logoUri?'display:none':'display:flex'}">${abbr}</div>`;
+  let chainEl='';
+  if(chainId){
+    const cid=Number(chainId);
+    const clogo=CHAIN_LOGOS[cid];
+    const cabb=cn(chainId).slice(0,3);
+    chainEl=clogo
+      ?`<img class="chain-icon" src="${clogo}" alt="${cn(chainId)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="chain-icon-fb" style="display:none">${cabb}</div>`
+      :`<div class="chain-icon-fb">${cabb}</div>`;
+  }
+  return`<div class="token-wrap">${img}${fb}${chainEl}</div>`;
+}
+
+function assetCell(logoUri,sym,amt,chainId){
+  return`<div class="asset-cell">${tokenLogoEl(logoUri,sym,chainId)}<div class="asset-info"><div class="asset-amt">${amt}</div><div class="asset-sym">${sym||''}</div></div></div>`;
+}
+
+function go(v){document.getElementById('addr').value=v;scan();}
+document.getElementById('addr').addEventListener('keydown',e=>{if(e.key==='Enter')scan();});
+scan();
+</script>
+</body>
+</html>
